@@ -1,0 +1,29 @@
+model:
+  name: vit_b_16
+  pretrained: true
+  num_classes: 1000
+
+evaluation:
+  batch_size: 64
+  corruption_types:
+    - gaussian_noise
+    - shot_noise
+    - impulse_noise
+    - defocus_blur
+    - glass_blur
+    - motion_blur
+    - zoom_blur
+    - snow
+    - frost
+    - fog
+    - brightness
+    - contrast
+    - elastic_transform
+    - pixelate
+    - jpeg_compression
+  severity_levels: [1, 2, 3, 4, 5]
+  baseline_dataset: data/clean/
+
+logging:
+  output_dir: outputs/metrics/
+  save_per_corruption: true
