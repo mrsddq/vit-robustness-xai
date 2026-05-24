@@ -58,7 +58,7 @@ def save_heatmap(image_path, mask, output_path):
 
 def main(model_name, method, inp, out_dir):
     if method != "attention_rollout":
-        raise NotImplementedError("Only attention_rollout is implemented in this repository.")
+        raise ValueError("Unsupported XAI method. Choose attention_rollout.")
 
     input_dir = Path(inp)
     if not input_dir.exists():
