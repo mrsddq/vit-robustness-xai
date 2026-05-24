@@ -1,95 +1,109 @@
-# ViT Robustness & Explainability (XAI)
+# ViT Robustness and Explainability
 
-Research code for evaluating robustness and fairness of Vision Transformers (ViTs), with explainability analysis using Grad-CAM, SHAP, and attention rollout.
+Research-oriented toolkit for evaluating Vision Transformer robustness, subgroup performance, and visual explanations.
 
-## Related Publications
+This repository is designed as a portfolio-quality ML research engineering project. It provides reusable scripts and experiment structure without claiming unverified results or shipping large datasets.
 
-| Paper | Role |
-|---|---|
-| Continuous Robustness and Fairness Evaluation for Deployed Vision Transformers | _[add contribution]_ |
-| Interpretable Visual Reasoning through Human Feedback and Symbolic Explanation | _[add contribution]_ |
-| RLHF for Trustworthy Vision-Language Models | _[add contribution]_ |
+## Highlights
 
-> Add paper links/DOIs and your specific contribution per paper above.
+- ImageNet-C style corruption robustness evaluation
+- Subgroup accuracy gap helper for fairness analysis
+- Attention rollout heatmap generation
+- Shared model, transform, config, and metric utilities
+- Experiment card template for reproducible reporting
+- Pytest checks for config and utility behavior
 
-## Results
+## Structure
 
-| Evaluation | Value |
-|---|---|
-| Baseline accuracy (clean ImageNet val) | _add_ |
-| Accuracy under Gaussian noise (severity 3) | _add_ |
-| Accuracy under blur corruption (severity 3) | _add_ |
-| Mean corruption robustness (mCE) | _add_ |
-| Fairness gap (subgroup accuracy delta) | _add_ |
+```text
+configs/
+  robustness.yaml
+docs/
+  EXPERIMENT_CARD.md
+scripts/
+  common.py
+  robustness/evaluate_robustness.py
+  evaluation/fairness_eval.py
+  xai/generate_heatmaps.py
+tests/
+  test_common.py
+```
 
-## Quickstart
+## Setup
 
 ```bash
-git clone https://github.com/your-username/vit-robustness-xai
-cd vit-robustness-xai
+python -m venv .venv
+.venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
 ## Robustness Evaluation
 
-Tests ViT performance under 15 corruption types at 5 severity levels (ImageNet-C protocol).
+Expected ImageNet-C style layout:
+
+```text
+data/corrupted/
+  gaussian_noise/
+    1/
+    2/
+    3/
+    4/
+    5/
+```
+
+Run:
 
 ```bash
-python scripts/robustness/evaluate_robustness.py \
-  --model vit_b_16 \
-  --data data/corrupted/ \
+python -m scripts.robustness.evaluate_robustness ^
+  --model vit_b_16 ^
+  --data data/corrupted ^
   --config configs/robustness.yaml
 ```
 
-## XAI — Attention & Grad-CAM Heatmaps
+Metrics are saved to `outputs/metrics/robustness_results.csv`.
+
+## Explainability
+
+Generate attention rollout overlays:
 
 ```bash
-python scripts/xai/generate_heatmaps.py \
-  --model vit_b_16 \
-  --input data/clean/ \
-  --output outputs/heatmaps/ \
-  --method gradcam
+python -m scripts.xai.generate_heatmaps ^
+  --model vit_b_16 ^
+  --input data/clean ^
+  --output outputs/heatmaps ^
+  --method attention_rollout
 ```
-
-Supported methods: `gradcam`, `attention_rollout`, `shap`
 
 ## Fairness Evaluation
 
 ```bash
-python scripts/evaluation/fairness_eval.py \
-  --model vit_b_16 \
-  --data data/clean/ \
+python -m scripts.evaluation.fairness_eval ^
+  --model vit_b_16 ^
+  --data data/clean ^
   --groups configs/subgroups.yaml
 ```
 
-## Sample Outputs
+Connect a subgroup-labelled dataset such as FairFace or CelebA before reporting fairness metrics.
 
-| File | Contents |
-|---|---|
-| `assets/01_paper_title_page.png` | Title page screenshot of core paper(s) |
-| `assets/02_gradcam_heatmap.png` | ViT image + Grad-CAM attention overlay |
-| `assets/03_robustness_chart.png` | Accuracy vs corruption severity |
-| `assets/04_contribution_note.png` | Your contribution statement per paper |
+## Testing
 
-## Architecture Note
+```bash
+pytest
+```
 
-All experiments use pretrained `vit_b_16` (ViT-B/16) from `torchvision.models`. Fine-tuning is optional — robustness is evaluated on the pretrained checkpoint unless noted.
+## Results
+
+No verified metrics are committed yet. Use [docs/EXPERIMENT_CARD.md](docs/EXPERIMENT_CARD.md) to record real experiment runs.
+
+Recommended artifacts:
+
+- `assets/robustness-chart.png`
+- `assets/attention-rollout.png`
+- `assets/fairness-gap-table.png`
+- `assets/failure-case.png`
 
 ## Limitations
 
-- Robustness evaluation on ImageNet-C requires the full corrupted dataset (~30GB) — not included
-- SHAP explanations are slow at full image resolution; subsample for exploration
-- Fairness metrics require labelled demographic subgroups — use FairFace or CelebA
-
-## Environment
-
-```
-Python 3.10
-torch==2.1.0
-torchvision==0.16.0
-timm==0.9.12
-grad-cam==1.4.8
-shap==0.43.0
-numpy==1.26.0
-matplotlib==3.8.0
-```
+- ImageNet-C and subgroup-labelled datasets are not included.
+- Full robustness evaluation can require substantial storage and GPU time.
+- Attention rollout is not a causal explanation; use it as a diagnostic signal, not proof of model reasoning.

@@ -1,33 +1,28 @@
-"""Evaluate per-subgroup accuracy for fairness analysis.
-Usage: python scripts/evaluation/fairness_eval.py --model vit_b_16 --data data/clean/
-"""
-import argparse, torch, json
-import torchvision.models as models
-import torchvision.transforms as T
-from torch.utils.data import DataLoader, Subset, ImageFolder
-import numpy as np
+"""Evaluate per-subgroup accuracy for fairness analysis."""
+import argparse
 from pathlib import Path
 
+import torch
 
-def main(model_name, data_dir):
+from scripts.common import load_torchvision_model, subgroup_gap
+
+
+def main(model_name, data_dir, groups_path=None):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = getattr(models, model_name)(pretrained=True).to(device).eval()
-    transform = T.Compose([T.Resize(256), T.CenterCrop(224), T.ToTensor(),
-                           T.Normalize([0.485,0.456,0.406],[0.229,0.224,0.225])])
-    print(f"Model: {model_name}  |  Data: {data_dir}")
-    print("Plug in subgroup-labelled dataset (e.g. FairFace or CelebA) and compute per-group accuracy.")
-    # group_accs = {}
-    # for group, indices in subgroup_map.items():
-    #     subset = Subset(dataset, indices)
-    #     loader = DataLoader(subset, batch_size=64)
-    #     group_accs[group] = accuracy(model, loader, device)
-    # max_gap = max(group_accs.values()) - min(group_accs.values())
-    # print(f"Fairness gap: {max_gap:.4f}")
+    load_torchvision_model(model_name, pretrained=True).to(device).eval()
+    print(f"Model: {model_name} | Data: {data_dir}")
+
+    if groups_path and not Path(groups_path).exists():
+        raise FileNotFoundError(f"Group annotation file not found: {groups_path}")
+
+    print("Next step: connect subgroup-labelled data, compute per-group accuracy, then report gap.")
+    print("Example gap calculation:", subgroup_gap({"group_a": 0.91, "group_b": 0.84}))
 
 
 if __name__ == "__main__":
-    p = argparse.ArgumentParser()
-    p.add_argument("--model", default="vit_b_16")
-    p.add_argument("--data", default="data/clean/")
-    a = p.parse_args()
-    main(a.model, a.data)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--model", default="vit_b_16")
+    parser.add_argument("--data", default="data/clean/")
+    parser.add_argument("--groups")
+    args = parser.parse_args()
+    main(args.model, args.data, args.groups)

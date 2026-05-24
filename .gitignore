@@ -5,3 +5,5 @@ __pycache__/
 .DS_Store
 .env
 wandb/
+.venv/
+.pytest_cache/
