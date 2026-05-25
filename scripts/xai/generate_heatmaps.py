@@ -8,6 +8,7 @@ import torch
 from PIL import Image
 
 from scripts.common import imagenet_transform, load_torchvision_model
+from scripts.xai.gradcam import gradcam_heatmap
 
 
 def attention_rollout(model, image_tensor):
@@ -57,9 +58,6 @@ def save_heatmap(image_path, mask, output_path):
 
 
 def main(model_name, method, inp, out_dir):
-    if method != "attention_rollout":
-        raise ValueError("Unsupported XAI method. Choose attention_rollout.")
-
     input_dir = Path(inp)
     if not input_dir.exists():
         raise FileNotFoundError(f"Input directory not found: {input_dir}")
@@ -73,7 +71,12 @@ def main(model_name, method, inp, out_dir):
     images = list(input_dir.rglob("*.jpg")) + list(input_dir.rglob("*.png"))
     for image_path in images[:20]:
         image_tensor = transform(Image.open(image_path).convert("RGB")).to(device)
-        mask = attention_rollout(model, image_tensor)
+        if method == "attention_rollout":
+            mask = attention_rollout(model, image_tensor)
+        elif method == "gradcam":
+            mask = gradcam_heatmap(model, image_tensor.unsqueeze(0))
+        else:
+            raise ValueError(f"Unsupported XAI method: {method}")
         output_path = output_dir / f"{image_path.stem}_{method}.png"
         save_heatmap(str(image_path), mask, output_path)
         print(f"Saved: {output_path}")
@@ -82,7 +85,7 @@ def main(model_name, method, inp, out_dir):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", default="vit_b_16")
-    parser.add_argument("--method", default="attention_rollout", choices=["attention_rollout"])
+    parser.add_argument("--method", default="attention_rollout", choices=["attention_rollout", "gradcam"])
     parser.add_argument("--input", default="data/clean/")
     parser.add_argument("--output", default="outputs/heatmaps/")
     args = parser.parse_args()

@@ -15,7 +15,7 @@ def main(model_name, data_dir, groups_path=None):
     if groups_path and not Path(groups_path).exists():
         raise FileNotFoundError(f"Group annotation file not found: {groups_path}")
 
-    print("Next step: connect subgroup-labelled data, compute per-group accuracy, then report gap.")
+    print("Provide subgroup-labelled data to compute per-group accuracy and report the gap.")
     print("Example gap calculation:", subgroup_gap({"group_a": 0.91, "group_b": 0.84}))
 
 
