@@ -1,5 +1,7 @@
 # ViT Robustness and Explainability
 
+[![CI](https://github.com/mrsddq/vit-robustness-xai/actions/workflows/ci.yml/badge.svg)](https://github.com/mrsddq/vit-robustness-xai/actions/workflows/ci.yml)
+
 Research-oriented toolkit for evaluating Vision Transformer robustness, subgroup performance, and visual explanations.
 
 This repository is designed as a portfolio-quality ML research engineering project. It provides reusable scripts and experiment structure without claiming unverified results or shipping large datasets.
@@ -19,7 +21,13 @@ This repository is designed as a portfolio-quality ML research engineering proje
 configs/
   robustness.yaml
 docs/
+  ABLATION_PLAN.md
+  ARCHITECTURE_RATIONALE.md
   EXPERIMENT_CARD.md
+  REPRODUCIBILITY.md
+  DEPLOYMENT_NOTES.md
+models/
+  vit.py
 scripts/
   common.py
   robustness/evaluate_robustness.py
@@ -94,6 +102,15 @@ pytest
 ## Results
 
 No verified metrics are committed yet. Use [docs/EXPERIMENT_CARD.md](docs/EXPERIMENT_CARD.md) to record real experiment runs.
+
+Research support docs:
+
+- [Reproducibility Plan](docs/REPRODUCIBILITY.md)
+- [Architecture Rationale](docs/ARCHITECTURE_RATIONALE.md)
+- [Ablation Plan](docs/ABLATION_PLAN.md)
+- [Deployment Notes](docs/DEPLOYMENT_NOTES.md)
+
+`outputs/metrics/smoke_test_results.csv` is a schema artifact only, not a benchmark.
 
 Recommended artifacts:
 

@@ -1,9 +1,10 @@
 from pathlib import Path
 
 import torch
-import torchvision.models as models
 import torchvision.transforms as T
 import yaml
+
+from models import load_model
 
 
 IMAGENET_MEAN = [0.485, 0.456, 0.406]
@@ -34,13 +35,7 @@ def imagenet_transform(image_size=224):
 
 
 def load_torchvision_model(model_name, pretrained=True):
-    constructor = getattr(models, model_name)
-    if pretrained:
-        weights_enum_name = f"{model_name.upper()}_Weights"
-        weights_enum = getattr(models, weights_enum_name, None)
-        weights = weights_enum.DEFAULT if weights_enum else "DEFAULT"
-        return constructor(weights=weights)
-    return constructor(weights=None)
+    return load_model(model_name, pretrained=pretrained)
 
 
 def accuracy(model, loader, device):
