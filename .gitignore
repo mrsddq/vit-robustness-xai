@@ -7,3 +7,11 @@ __pycache__/
 wandb/
 .venv/
 .pytest_cache/
+*.py[cod]
+venv/
+node_modules/
+dist/
+build/
+coverage/
+reports/
+*.log
