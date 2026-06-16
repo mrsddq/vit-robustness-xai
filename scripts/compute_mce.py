@@ -32,6 +32,8 @@ def compute_mce(input_csv: Path, output_csv: Path) -> None:
     for row in rows:
         corruption = row["corruption"]
         accuracy = float(row["accuracy"])
+        if not 0.0 <= accuracy <= 1.0:
+            raise ValueError(f"accuracy must be between 0 and 1 for {corruption}")
         grouped.setdefault(corruption, []).append(1.0 - accuracy)
 
     output_csv.parent.mkdir(parents=True, exist_ok=True)
@@ -53,6 +55,8 @@ def compute_mce(input_csv: Path, output_csv: Path) -> None:
                     "ce": ce,
                 }
             )
+        if not ce_values:
+            raise ValueError("No recognized ImageNet-C corruption rows found")
         writer.writerow({"corruption": "mean", "error": "", "alexnet_error": "", "ce": sum(ce_values) / len(ce_values)})
 
 
