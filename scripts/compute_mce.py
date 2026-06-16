@@ -25,7 +25,8 @@ ALEXNET_REFERENCE_ERRORS = {
 
 
 def compute_mce(input_csv: Path, output_csv: Path) -> None:
-    rows = list(csv.DictReader(input_csv.open(encoding="utf-8")))
+    with input_csv.open(encoding="utf-8") as file:
+        rows = list(csv.DictReader(file))
     if not rows:
         raise ValueError(f"No rows found in {input_csv}")
     grouped: dict[str, list[float]] = {}
