@@ -22,4 +22,4 @@ def load_model(name: str = "vit_b_16", pretrained: bool = True) -> nn.Module:
     if name == "resnet50":
         weights = models.ResNet50_Weights.DEFAULT if pretrained else None
         return models.resnet50(weights=weights)
-    raise ValueError(f"Unsupported model: {name}")
+    raise ValueError(f"Unsupported torchvision model: {name}")
