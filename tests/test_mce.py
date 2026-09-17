@@ -51,7 +51,7 @@ class MCETests(unittest.TestCase):
             output_csv = tmp_path / "mce.csv"
             _write_rows(input_csv, [{"corruption": "custom_shift", "severity": 1, "accuracy": 0.9}])
 
-            with self.assertRaisesRegex(ValueError, "No recognized"):
+            with self.assertRaisesRegex(ValueError, "Unknown corruption"):
                 compute_mce(input_csv, output_csv)
 
 
