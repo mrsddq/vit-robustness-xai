@@ -41,7 +41,7 @@ tests/
 
 ```bash
 python -m venv .venv
-.venv\Scripts\activate
+source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
@@ -62,10 +62,7 @@ data/corrupted/
 Run:
 
 ```bash
-python -m scripts.robustness.evaluate_robustness ^
-  --model vit_b_16 ^
-  --data data/corrupted ^
-  --config configs/robustness.yaml
+python -m scripts.robustness.evaluate_robustness --model vit_b_16 --data data/corrupted --config configs/robustness.yaml
 ```
 
 Metrics are saved to `outputs/metrics/robustness_results.csv`.
@@ -75,11 +72,7 @@ Metrics are saved to `outputs/metrics/robustness_results.csv`.
 Generate attention rollout overlays:
 
 ```bash
-python -m scripts.xai.generate_heatmaps ^
-  --model vit_b_16 ^
-  --input data/clean ^
-  --output outputs/heatmaps ^
-  --method attention_rollout
+python -m scripts.xai.generate_heatmaps --model vit_b_16 --input data/clean --output outputs/heatmaps --method attention_rollout
 ```
 
 ## Subgroup evaluation
