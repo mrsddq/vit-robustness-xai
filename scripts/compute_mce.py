@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import math
 from pathlib import Path
 
 
@@ -30,16 +31,26 @@ def compute_mce(input_csv: Path, output_csv: Path) -> None:
     if not rows:
         raise ValueError(f"No rows found in {input_csv}")
     grouped: dict[str, list[float]] = {}
+    seen = set()
     for row in rows:
         corruption = row["corruption"]
+        if corruption not in ALEXNET_REFERENCE_ERRORS:
+            raise ValueError(f"Unknown corruption: {corruption}")
+        severity = int(row["severity"])
+        if severity not in range(1, 6):
+            raise ValueError("severity must be 1..5")
+        key = (corruption, severity)
+        if key in seen:
+            raise ValueError(f"Duplicate corruption/severity: {key}")
+        seen.add(key)
         accuracy = float(row["accuracy"])
-        if not 0.0 <= accuracy <= 1.0:
+        if not math.isfinite(accuracy) or not 0.0 <= accuracy <= 1.0:
             raise ValueError(f"accuracy must be between 0 and 1 for {corruption}")
         grouped.setdefault(corruption, []).append(1.0 - accuracy)
 
     output_csv.parent.mkdir(parents=True, exist_ok=True)
     with output_csv.open("w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=["corruption", "error", "alexnet_error", "ce"])
+        writer = csv.DictWriter(f, fieldnames=["corruption", "error", "alexnet_error", "ce", "severity_count", "benchmark_complete"])
         writer.writeheader()
         ce_values = []
         for corruption, errors in sorted(grouped.items()):
@@ -54,11 +65,13 @@ def compute_mce(input_csv: Path, output_csv: Path) -> None:
                     "error": error,
                     "alexnet_error": ALEXNET_REFERENCE_ERRORS[corruption],
                     "ce": ce,
+                    "severity_count": len(errors),
+                    "benchmark_complete": len(seen) == len(ALEXNET_REFERENCE_ERRORS) * 5,
                 }
             )
         if not ce_values:
             raise ValueError("No recognized ImageNet-C corruption rows found")
-        writer.writerow({"corruption": "mean", "error": "", "alexnet_error": "", "ce": sum(ce_values) / len(ce_values)})
+        writer.writerow({"corruption": "mean", "error": "", "alexnet_error": "", "ce": sum(ce_values) / len(ce_values), "severity_count": len(seen), "benchmark_complete": len(seen) == len(ALEXNET_REFERENCE_ERRORS) * 5})
 
 
 def main() -> None:

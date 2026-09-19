@@ -40,4 +40,4 @@ jobs:
       - name: Show heatmap help
         run: docker run --rm vit-robustness-xai:smoke --help
       - name: Run tests in Docker
-        run: docker run --rm --entrypoint python vit-robustness-xai:smoke -m unittest discover -s tests
+        run: docker run --rm --entrypoint python vit-robustness-xai:smoke -m pytest -q

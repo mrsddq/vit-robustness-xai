@@ -2,7 +2,6 @@
 import argparse
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from PIL import Image
@@ -12,33 +11,62 @@ from scripts.xai.gradcam import gradcam_heatmap
 
 
 def attention_rollout(model, image_tensor):
-    attentions = []
-    hooks = []
+    """Capture real per-head attention, including torchvision's tuple outputs."""
+    backbone = getattr(model, "backbone", model)
+    if not hasattr(backbone, "encoder"):
+        raise ValueError("attention_rollout requires a ViT encoder")
+    attentions, handles = [], []
 
-    def hook(_module, _inputs, output):
-        attentions.append(output.detach())
+    def request_weights(_module, args, kwargs):
+        kwargs = dict(kwargs)
+        kwargs["need_weights"] = True
+        kwargs["average_attn_weights"] = False
+        return args, kwargs
 
-    for block in model.encoder.layers:
-        hooks.append(block.self_attention.register_forward_hook(hook))
+    def collect_weights(_module, _args, output):
+        if not isinstance(output, tuple) or output[1] is None:
+            raise ValueError("Attention module did not return attention weights")
+        attentions.append(output[1].detach())
 
-    with torch.no_grad():
-        model(image_tensor.unsqueeze(0))
-
-    for hook_handle in hooks:
-        hook_handle.remove()
-
-    rollout = torch.eye(attentions[0].shape[-1])
+    was_training = model.training
+    try:
+        model.eval()
+        for block in backbone.encoder.layers:
+            handles.append(block.self_attention.register_forward_pre_hook(request_weights, with_kwargs=True))
+            handles.append(block.self_attention.register_forward_hook(collect_weights))
+        with torch.no_grad():
+            model(image_tensor.unsqueeze(0))
+    finally:
+        for handle in handles:
+            handle.remove()
+        model.train(was_training)
+    if not attentions:
+        raise ValueError("No attention layers were captured")
+    tokens = attentions[0].shape[-1]
+    identity = torch.eye(tokens, device=attentions[0].device, dtype=attentions[0].dtype)
+    rollout = identity
     for attention in attentions:
-        attention_average = attention.squeeze(0).mean(0)
-        rollout = torch.matmul(attention_average + torch.eye(attention_average.shape[-1]), rollout)
-
+        averaged = attention[0].mean(dim=0)
+        residual = averaged + identity
+        residual = residual / residual.sum(dim=-1, keepdim=True)
+        rollout = residual @ rollout
     mask = rollout[0, 1:]
-    size = int(mask.shape[0] ** 0.5)
-    return mask.reshape(size, size).numpy()
+    size = int(mask.numel() ** 0.5)
+    if size * size != mask.numel():
+        raise ValueError("Patch tokens do not form a square image grid")
+    mask = mask.reshape(size, size)
+    maximum = mask.max()
+    if maximum > 0:
+        mask = mask / maximum
+    return mask.cpu().numpy()
 
 
 def save_heatmap(image_path, mask, output_path):
-    image = np.array(Image.open(image_path).resize((224, 224)))
+    import matplotlib.pyplot as plt
+    from torchvision.transforms import CenterCrop, Resize
+    # Match imagenet_transform geometric preprocessing, not a distorted full-image resize.
+    with Image.open(image_path) as source:
+        image = np.array(CenterCrop(224)(Resize(256)(source.convert("RGB"))))
     mask_resized = np.array(Image.fromarray((mask * 255).astype(np.uint8)).resize((224, 224))) / 255.0
 
     figure, axes = plt.subplots(1, 3, figsize=(12, 4))
