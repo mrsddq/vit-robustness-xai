@@ -25,7 +25,7 @@ def evaluate_predictions(path):
         raise ValueError("No predictions to evaluate")
     seen, groups = set(), {}
     for row in rows:
-        if any(not row.get(key, "").strip() for key in required):
+        if any(not (row.get(key) or "").strip() for key in required):
             raise ValueError("Prediction fields must not be empty")
         if row["sample_id"] in seen:
             raise ValueError("Duplicate sample_id would bias subgroup counts")

@@ -83,3 +83,20 @@ def test_rollout_with_real_tiny_torchvision_vit_wrapper():
     mask = attention_rollout(Wrapper(), torch.rand(3, 16, 16))
     assert mask.shape == (2, 2)
     assert np.isfinite(mask).all()
+def test_incomplete_prediction_row_is_a_validation_error(tmp_path):
+    path = tmp_path / "predictions.csv"
+    path.write_text("sample_id,group,label,prediction\n1,a,yes\n")
+    with pytest.raises(ValueError, match="empty"):
+        evaluate_predictions(path)
+
+
+@pytest.mark.parametrize("value", [float("nan"), float("inf"), -float("inf")])
+def test_accuracy_rejects_nonfinite_logits(value):
+    from scripts.common import accuracy
+
+    class Broken(nn.Module):
+        def forward(self, image):
+            return torch.full((image.shape[0], 2), value)
+
+    with pytest.raises(ValueError, match="finite"):
+        accuracy(Broken(), [(torch.zeros(1, 3, 4, 4), torch.zeros(1, dtype=torch.long))], "cpu")

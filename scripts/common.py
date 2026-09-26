@@ -46,7 +46,10 @@ def accuracy(model, loader, device):
         for images, labels in loader:
             images = images.to(device)
             labels = labels.to(device)
-            predictions = model(images).argmax(dim=1)
+            logits = model(images)
+            if not torch.isfinite(logits).all():
+                raise ValueError("Model logits must be finite")
+            predictions = logits.argmax(dim=1)
             correct += (predictions == labels).sum().item()
             total += labels.numel()
     return correct / total if total else 0.0
